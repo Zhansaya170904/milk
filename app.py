@@ -115,7 +115,8 @@ def _ensure_demo_csvs():
         pd.DataFrame([
             {"product_id":1,"name":"Молоко (коровье)","type":"молоко","source":"коровье","description":"Свежее молоко"},
             {"product_id":2,"name":"Молоко (козье)","type":"молоко","source":"козье","description":"Свежее молоко"},
-            {"product_id":3,"name":"Сары ірімшік","type":"сыр","source":"разное","description":"Твёрдый сыр (сары ірімшік)"},
+            {"product_id":3,"name":"Сары ірімшік (коровье)","type":"сыр","source":"коровье","description":"Твёрдый сыр"},
+            {"product_id":4,"name":"Сары ірімшік (козье)","type":"сыр","source":"козье","description":"Твёрдый сыр"},
             {"product_id":5,"name":"Айран","type":"кисломолочный","source":"коровье","description":"Кисломолочный продукт"}
         ]).to_csv(PRODUCTS_CSV, index=False, encoding="utf-8-sig")
 
@@ -304,6 +305,7 @@ PRODUCT_COLORS = {
 1: "linear-gradient(135deg,#667eea 0%,#764ba2 100%)",
 2: "linear-gradient(135deg,#f093fb 0%,#f5576c 100%)",
 3: "linear-gradient(135deg,#4facfe 0%,#00f2fe 100%)",
+4: "linear-gradient(135deg,#43e97b 0%,#38f9d7 100%)",
 5: "linear-gradient(135deg,#fa709a 0%,#fee140 100%)"
 }
 
@@ -330,9 +332,8 @@ if 'selected_step_label' not in st.session_state:
     st.session_state['selected_step_label'] = None
 
 st.sidebar.title("Навигация")
-# избегаем предупреждения label empty — даём метку
 nav_choice = st.sidebar.radio(
-    "Меню",
+    "",
     ["Главная", "Продукт", "Модели и аналитика"],
     index=["Главная","Продукт","Модели и аналитика"].index(st.session_state['page'])
     if st.session_state['page'] in ["Главная","Продукт","Модели и аналитика"] else 0
@@ -412,12 +413,13 @@ if st.session_state['page'] == 'Главная':
     )
     st.markdown("---")
 
-    # ---------- Исходные продукты (теперь 4 карточки) ----------
+    # ---------- Исходные продукты ----------
     fixed_products = [
-        {"product_id": 1, "name": "Молоко (коровье)", "type": "Молоко", "source": "Коровье", "description": "Свежее пастеризованное молоко"},
-        {"product_id": 2, "name": "Молоко (козье)",   "type": "Молоко", "source": "Козье",   "description": "Натуральное фермерское козье молоко"},
-        {"product_id": 3, "name": "Сары ірімшік",     "type": "Сыр",    "source": "Молоко",  "description": "Твёрдый сыр (сары ірімшік) — контроль и эксперименты"},
-        {"product_id": 5, "name": "Айран",            "type": "Кисломолочный", "source": "Коровье", "description": "Освежающий кисломолочный продукт (контроль + опыты)"},
+        {"product_id": 1, "name": "Молоко (коровье)",       "type": "Молоко",        "source": "Коровье", "description": "Свежее пастеризованное молоко"},
+        {"product_id": 2, "name": "Молоко (козье)",         "type": "Молоко",        "source": "Козье",   "description": "Натуральное фермерское козье молоко"},
+        {"product_id": 3, "name": "Сары ірімшік (коровье)", "type": "Сыр",           "source": "Коровье", "description": "Твёрдый сыр традиционной выработки"},
+        {"product_id": 4, "name": "Сары ірімшік (козье)",   "type": "Сыр",           "source": "Козье",   "description": "Твёрдый сыр из козьего молока"},
+        {"product_id": 5, "name": "Айран",                  "type": "Кисломолочный", "source": "Коровье", "description": "Освежающий кисломолочный продукт"},
     ]
 
     # ---------- Подготовка данных ----------
@@ -470,12 +472,13 @@ if st.session_state['page'] == 'Главная':
             "linear-gradient(135deg, #fafafa, #f3f4f6)",
             "linear-gradient(135deg, #fafafa, #f3f4f6)",
             "linear-gradient(135deg, #fafafa, #f3f4f6)",
+            "linear-gradient(135deg, #fafafa, #f3f4f6)",
             "linear-gradient(135deg, #fafafa, #f3f4f6)"
         ]
         return gradients[(pid - 1) % len(gradients)]
 
     for i, p in enumerate(display_products):
-        pid = int(p["product_id"])
+        pid = int(p["product_id"]) 
         grad = gradient_for(pid)
 
         card_html = f"""
@@ -654,7 +657,7 @@ elif st.session_state['page'] == 'Продукт':
             if not m.empty:
                 prod = m.iloc[0].to_dict()
         if prod is None:
-            names = {1:"Молоко (коровье)",2:"Молоко (козье)",3:"Сары ірімшік",5:"Айран"}
+            names = {1:"Молоко (коровье)",2:"Молоко (козье)",3:"Сары ірімшік (коровье)",4:"Сары ірімшік (козье)",5:"Айран"}
             prod = {"product_id":pid,"name":names.get(pid,f"Продукт {pid}"),"type":"-","source":"-","description":""}
 
         col1, col2 = st.columns([3,1])
@@ -691,7 +694,7 @@ elif st.session_state['page'] == 'Продукт':
             st.dataframe(df_phys, use_container_width=True)
         elif "айран" in pname:
             st.caption("Айран: требования к исходному молоку — как для питьевого молока (см. нормы выше).")
-        elif ("сыр" in pname) or ("ірімшік" in pname) or ("сары" in pname):
+        elif ("сыр" in pname) or ("ірімшік" in pname):
             st.caption("Сыры (в т.ч. сары ірімшік): исходное молоко по ветеринарным/санитарным требованиям; КМАФАнМ ≤ 1×10⁶ КОЕ/г, патогены — отсутствуют.")
 
         # -------- Процесс (кликабельные этапы) --------
@@ -859,7 +862,7 @@ elif st.session_state['page'] == 'Продукт':
 
 
 # ---------------------------
-# --- MODELS & ANALYTICS (v3: 4 карточки: milk cow, milk goat, cheese, ayran) ---
+# --- MODELS & ANALYTICS (v3: карточки без GET, остаёмся в разделе) ---
 # ---------------------------
 elif st.session_state['page'] == 'Модели и аналитика':
     st.title("Модели и аналитика")
@@ -869,12 +872,13 @@ elif st.session_state['page'] == 'Модели и аналитика':
     if 'analytics_selected_product' not in st.session_state:
         st.session_state['analytics_selected_product'] = None
 
-    # список продуктов — теперь 4 карточки
+    # список продуктов (как на Главной)
     fixed_products = [
-        {"product_id": 1, "name": "Молоко (коровье)", "type": "Молоко", "source": "Коровье", "description": "Свежее пастеризованное молоко"},
-        {"product_id": 2, "name": "Молоко (козье)",   "type": "Молоко", "source": "Козье",   "description": "Натуральное фермерское козье молоко"},
-        {"product_id": 3, "name": "Сары ірімшік",     "type": "Сыр",    "source": "Молоко",  "description": "Твёрдый сыр (контроль и опыты)"},
-        {"product_id": 5, "name": "Айран",            "type": "Кисломолочный", "source": "Коровье", "description": "Освежающий кисломолочный продукт (контроль + опыты)"},
+        {"product_id": 1, "name": "Молоко (коровье)",       "type": "Молоко",        "source": "Коровье", "description": "Свежее пастеризованное молоко"},
+        {"product_id": 2, "name": "Молоко (козье)",         "type": "Молоко",        "source": "Козье",   "description": "Натуральное фермерское козье молоко"},
+        {"product_id": 3, "name": "Сары ірімшік (коровье)", "type": "Сыр",           "source": "Коровье", "description": "Твёрдый сыр традиционной выработки"},
+        {"product_id": 4, "name": "Сары ірімшік (козье)",   "type": "Сыр",           "source": "Козье",   "description": "Твёрдый сыр из козьего молока"},
+        {"product_id": 5, "name": "Айран",                  "type": "Кисломолочный", "source": "Коровье", "description": "Освежающий кисломолочный продукт"},
     ]
     display_products = []
     if not products.empty and 'product_id' in products.columns:
@@ -1037,122 +1041,103 @@ elif st.session_state['page'] == 'Модели и аналитика':
         st.markdown("---")
         st.header("Сары ірімшік — аналитика и модели")
 
-        st.subheader("Вводные контрольные данные (корова vs коза)")
-        # Контрольные показатели из MATLAB-скрипта
-        Product = ['Сиыр ірімшігі', 'Ешкі ірімшігі']
-        Moisture = np.array([24.63, 27.95])   # в %
-        Protein  = np.array([11.43, 23.91])
-        Fat      = np.array([35.06, 27.48])
-        DryMatter = np.array([75.36, 72.04])
-        KMAFANM  = np.array([2e3, 1e3])
-        pH_control = np.array([5.60, 5.65])
-        log10KMAF = np.log10(KMAFANM)
+        # ==== ваш код (с минимальными правками) ====
+        KPI_cow = {'M':24.63, 'Pro':11.43, 'Fat':35.06, 'Sol':75.36}
+        params = {'k_coag': 0.35, 'k_drain': 0.08, 'k_dry': 0.0018, 'n_page': 1.12}
+        experiments = [
+            {'name': 'Контроль', 'additive': 0.05,  'color': (0, 0.45, 0.74)},
+            {'name': 'Опыт-1',   'additive': 0.045, 'color': (0.85, 0.33, 0.1)}
+        ]
 
-        df_ctrl = pd.DataFrame({
-            "Продукт": Product,
-            "Влага %": Moisture,
-            "Белок %": Protein,
-            "Жир %": Fat,
-            "Сухое вещ-во %": DryMatter,
-            "KMAFАнМ (КОЕ/г)": KMAFANM,
-            "log10(KMAFАнМ)": log10KMAF,
-            "pH (контроль)": pH_control
-        })
-        st.dataframe(df_ctrl, use_container_width=True)
+        coag  = lambda t, k: 1 - np.exp(-k*t)
+        drain = lambda t, k, M0, Mmin: Mmin + (M0 - Mmin)*np.exp(-k*t)
+        # исправлена опечатка: добавлен знак умножения перед np.exp
+        pagef  = lambda t, k, n, M0, Mf: Mf + (M0 - Mf)*np.exp(-(k*t)*n)
 
-        st.markdown("---")
-        st.subheader("Влияние соли — модель (Опыт: 0–5% соль)")
+        # 1) Сравнение двух опытов — динамика влажности M(t)
+        t = np.linspace(0, 8, 200)
+        figA, axA = plt.subplots(figsize=(8,5))
+        axA.set_title('Сравнение двух опытов — динамика влажности M(t)')
+        axA.set_xlabel('Время, ч'); axA.set_ylabel('Влажность, %'); axA.grid(True)
 
-        # dose 0..5
-        dose = np.arange(0, 6, 1, dtype=float)
+        for expi in experiments:
+            M0 = 55 - 100*expi['additive']
+            Mmin = KPI_cow['M']
+            M_drain = drain(t, params['k_drain']*(1+0.2*expi['additive']), M0, 35)
+            M_page  = pagef(t, params['k_dry']*(1+0.3*expi['additive']), params['n_page'], 35, Mmin)
+            M_total = (M_drain + M_page)/2
+            axA.plot(t, M_total, linewidth=2.2, color=expi['color'],
+                     label=f"{expi['name']} (добавка {100*expi['additive']:.1f}%)")
+            axA.text(t[-1], M_total[-1], f" {M_total[-1]:.1f}%", color=expi['color'], weight='bold')
+        axA.legend()
+        st.pyplot(figA, use_container_width=True)
 
-        # параметры модели (из matlab)
-        pH_base = 5.60
-        gamma_pH = 0.045  # на 1% соли pH уменьшается на 0.045
-        pH_op1 = pH_base - gamma_pH * dose
+        # 2) Степень коагуляции α(t)
+        figB, axB = plt.subplots(figsize=(8,5))
+        axB.set_title('Степень коагуляции α(t)')
+        axB.set_xlabel('Время, ч'); axB.set_ylabel('α'); axB.grid(True)
+        for expi in experiments:
+            axB.plot(t, coag(t, params['k_coag']*(1+0.1*expi['additive'])),
+                     linewidth=2, color=expi['color'],
+                     label=f"{expi['name']} ({100*expi['additive']:.1f}%)")
+        axB.set_ylim([0,1]); axB.legend()
+        st.pyplot(figB, use_container_width=True)
 
-        gamma_fat = 0.35   # 1% соли → жир +0.35%
-        Fat_base = 35.06
-        Fat_op1 = Fat_base + gamma_fat * dose
+        # 3) Сушка (Page): M(t)
+        figC, axC = plt.subplots(figsize=(8,5))
+        axC.set_title('Сушка (Page): M(t)')
+        axC.set_xlabel('Время, ч'); axC.set_ylabel('Влажность, %'); axC.grid(True)
+        for expi in experiments:
+            axC.plot(t, pagef(t, params['k_dry']*(1+0.3*expi['additive']), params['n_page'], 35, KPI_cow['M']),
+                     linewidth=2, color=expi['color'],
+                     label=f"{expi['name']} ({100*expi['additive']:.1f}%)")
+        axC.set_ylim([34.8, 35.05]); axC.legend()
+        st.pyplot(figC, use_container_width=True)
 
-        gamma_moist = 0.40  # 1% соли → влага -0.40%
-        Moist_base = 24.63
-        Moist_op1 = Moist_base - gamma_moist * dose
+        # 4) Дренаж/пресс: влажность M(t)
+        t_drain = np.linspace(0, 1.5, 180)
+        M0_drain = 42.5; M_eq_press = 35.0
+        figD, axD = plt.subplots(figsize=(8,5))
+        axD.set_title('Дренаж/пресс: влажность M(t)')
+        axD.set_xlabel('Время, ч'); axD.set_ylabel('Влажность, %'); axD.grid(True)
+        for expi in experiments:
+            k_drain_eff = params['k_drain']*(1+0.25*expi['additive'])
+            M_drain_t = M_eq_press + (M0_drain - M_eq_press)*np.exp(-k_drain_eff*t_drain)
+            axD.plot(t_drain, M_drain_t, linewidth=2, color=expi['color'],
+                     label=f"{expi['name']} ({100*expi['additive']:.1f}%)")
+        axD.legend()
+        st.pyplot(figD, use_container_width=True)
 
-        gamma_micro = 0.22  # 1% соли → микробы -22% (линейная модель в приближении)
-        KMAF_base = 2e3
-        KMAF_op1 = KMAF_base * (1 - gamma_micro * dose)
-        KMAF_op1 = np.maximum(KMAF_op1, 1)  # не опускать ниже 1 как защита численно
+        # 5) Дренаж: относительная потеря сыворотки
+        figE, axE = plt.subplots(figsize=(8,5))
+        axE.set_title('Дренаж: относительная потеря сыворотки')
+        axE.set_xlabel('Время, ч'); axE.set_ylabel('Доля, отн. ед.'); axE.grid(True)
+        for expi in experiments:
+            k_drain_eff = params['k_drain']*(1+0.25*expi['additive'])
+            M_drain_t = M_eq_press + (M0_drain - M_eq_press)*np.exp(-k_drain_eff*t_drain)
+            loss_rel = (M0_drain - M_drain_t) / (M0_drain - M_eq_press)
+            axE.plot(t_drain, loss_rel, linewidth=2, color=expi['color'],
+                     label=f"{expi['name']} ({100*expi['additive']:.1f}%)")
+        axE.set_ylim([0,1]); axE.legend()
+        st.pyplot(figE, use_container_width=True)
 
-        tab1, tab2, tab3 = st.tabs(["pH vs соль", "Жир/Влага vs соль", "Микробиология / Динамика pH"])
-
-        with tab1:
-            fig_pH, axp = plt.subplots(figsize=(8,5))
-            axp.plot(dose, pH_op1, '-o', linewidth=2, markersize=6)
-            axp.set_xlabel('Соль (%)'); axp.set_ylabel('pH')
-            axp.set_title('Влияние содержания соли на pH (0–5%)')
-            axp.grid(True, alpha=0.3)
-            for i in range(len(dose)):
-                axp.text(dose[i]+0.05, pH_op1[i], f'{dose[i]:.0f}%', fontsize=9)
-            st.pyplot(fig_pH, use_container_width=True)
-
-        with tab2:
-            fig_fm, axfm = plt.subplots(figsize=(8,5))
-            axfm.plot(dose, Fat_op1, '-s', linewidth=2, markersize=6, label='Жир % (модель)')
-            axfm.plot(dose, Moist_op1, '-o', linewidth=2, markersize=6, label='Влага % (модель)')
-            axfm.set_xlabel('Соль (%)'); axfm.set_ylabel('Значение, %')
-            axfm.set_title('Изменения жира и влаги с ростом соли')
-            axfm.legend(); axfm.grid(True, alpha=0.3)
-            st.pyplot(fig_fm, use_container_width=True)
-
-            # Таблица модели
-            df_model = pd.DataFrame({
-                "Соль %": dose,
-                "pH (модель)": np.round(pH_op1, 3),
-                "Жир % (модель)": np.round(Fat_op1, 3),
-                "Влага % (модель)": np.round(Moist_op1, 3),
-                "KMAFАнМ (модель)": np.round(KMAF_op1, 1)
-            })
-            st.dataframe(df_model, use_container_width=True)
-
-        with tab3:
-            # Микробиология
-            fig_micro, axm = plt.subplots(figsize=(8,5))
-            axm.plot(dose, KMAF_op1, '-^', linewidth=2, markersize=6)
-            axm.set_xlabel('Соль (%)'); axm.set_ylabel('KMAFАнМ (КОЕ/г)')
-            axm.set_title('Влияние соли на KMAFАнМ (модель)')
-            axm.grid(True, alpha=0.3)
-            st.pyplot(fig_micro, use_container_width=True)
-
-            # pH динамика контроль vs соль 5%
-            t_days = np.array([1, 3, 5, 7, 10], dtype=float)
-            pH_dyn_control = np.array([5.90, 5.80, 5.72, 5.68, 5.60])
-            pH_dyn_op1 = pH_dyn_control - 5 * gamma_pH  # эффект 5% соли
-            fig_dyn, axdyn = plt.subplots(figsize=(8,5))
-            axdyn.plot(t_days, pH_dyn_control, '-o', linewidth=2, label='Контроль')
-            axdyn.plot(t_days, pH_dyn_op1, '-s', linewidth=2, label='Опыт 5% соли')
-            axdyn.set_xlabel('Время (сутки)'); axdyn.set_ylabel('pH')
-            axdyn.set_title('Динамика pH: Контроль vs 5% соли')
-            axdyn.legend(); axdyn.grid(True, alpha=0.3)
-            st.pyplot(fig_dyn, use_container_width=True)
-
-            # 3D поверхность: время + соль -> pH
-            try:
-                from mpl_toolkits.mplot3d import Axes3D  # noqa: F401
-                t_grid = np.linspace(1, 10, 30)
-                salt_grid = np.linspace(0, 5, 30)
-                Tg, Sg = np.meshgrid(t_grid, salt_grid)
-                # простая модель pH: базовый лог-вклад времени + снижение пропорц. соли
-                pH_surface = 5.90 - 0.12 * np.log(Tg) - gamma_pH * Sg
-                fig3d = plt.figure(figsize=(9,6))
-                ax3d = fig3d.add_subplot(111, projection='3d')
-                surf = ax3d.plot_surface(Sg, Tg, pH_surface, cmap='autumn', edgecolor='none', alpha=0.9)
-                ax3d.set_xlabel('Соль (%)'); ax3d.set_ylabel('Время (сутки)'); ax3d.set_zlabel('pH')
-                ax3d.set_title('3D: Соль + Время → pH')
-                fig3d.colorbar(surf, shrink=0.6)
-                st.pyplot(fig3d, use_container_width=True)
-            except Exception:
-                st.info("3D-график недоступен в этой среде (требуется поддержка Matplotlib 3D).")
+        # 6) Посол: NaCl на поверхности и в центре
+        t_salt = np.linspace(0, 2.0, 181)
+        C_brine = 0.20
+        k_surf_base, k_center_base = 2.2, 0.55
+        figF, axF = plt.subplots(figsize=(8,5))
+        axF.set_title('Посол: NaCl на поверхности и в центре')
+        axF.set_xlabel('Время, ч'); axF.set_ylabel('Массовая доля NaCl'); axF.grid(True)
+        for expi in experiments:
+            k_surf   = k_surf_base*(1+0.10*expi['additive'])
+            k_center = k_center_base*(1+0.10*expi['additive'])
+            C_surf   = C_brine*(1 - np.exp(-k_surf*t_salt))
+            C_center = C_brine*(1 - np.exp(-k_center*t_salt))
+            axF.plot(t_salt, C_surf, '-',  linewidth=2, color=expi['color'])
+            axF.plot(t_salt, C_center, '--', linewidth=2, color=expi['color'])
+        axF.axhline(C_brine, color='k', linestyle=':', label='Рассол 20%')
+        axF.legend()
+        st.pyplot(figF, use_container_width=True)
 
     def render_empty_analytics(name: str):
         st.markdown("---")
@@ -1176,10 +1161,8 @@ elif st.session_state['page'] == 'Модели и аналитика':
 
         if sel_pid == 5:
             render_airan_analytics()
-        elif sel_pid == 3:  # Сары ірімшік (объединённая карточка)
+        elif sel_pid in (3, 4):  # Сары ірімшік (коровье/козье)
             render_cheese_analytics()
-        elif sel_pid in (1,2):
-            render_empty_analytics(prod_meta['name'] if prod_meta else f"Продукт {sel_pid}")
         else:
             render_empty_analytics(prod_meta['name'] if prod_meta else f"Продукт {sel_pid}")
 
